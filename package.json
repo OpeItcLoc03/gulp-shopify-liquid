@@ -1,6 +1,6 @@
 {
   "name": "gulp-shopify-liquid",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A gulp plugin to parse Shopify liquid templates",
   "main": "index.js",
   "scripts": {

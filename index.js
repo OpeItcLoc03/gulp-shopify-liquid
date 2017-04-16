@@ -23,7 +23,7 @@ module.exports = function(options) {
         root: options.path,
         extname: options.ext
     });
-    
+
 	if (options.filters && typeof options.filters == "object") {
 		/* Register liquid filters prior to processing */
 		Object.keys(options.filters).forEach(function (filter) {
@@ -45,6 +45,10 @@ module.exports = function(options) {
 			return callback();
 		}
 
+        if (file.data) {
+            data = _.merge(file.data, data);
+        }
+
 		if (file.isStream()) {
 			this.emit("error",
 				new gutil.PluginError("gulp-shopify-liquid", "Stream content is not supported"));
@@ -53,7 +57,7 @@ module.exports = function(options) {
 
 		if (file.isBuffer()) {
             var template = engine.parse(file.contents.toString());
-            var promise = engine.render(template, {name: 'alice'});
+            var promise = engine.render(template, data);
             promise.then(function (output) {
                 file.contents = new Buffer(output);
                 this.push(file);

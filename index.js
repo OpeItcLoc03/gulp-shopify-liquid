@@ -19,9 +19,14 @@ module.exports = function(options) {
     }
     options = _.defaultsDeep(options || {}, defaults);
     
+    var engine = Liquid({
+        root: options.path,
+        extname: options.ext
+    });
+    
 	if (options.filters && typeof options.filters == "object") {
 		/* Register liquid filters prior to processing */
-		Object.keys(options.filter).forEach(function (filter) {
+		Object.keys(options.filters).forEach(function (filter) {
             engine.registerFilter(filter, options.filters[filter]);
 		});
 	}
@@ -47,10 +52,6 @@ module.exports = function(options) {
 		}
 
 		if (file.isBuffer()) {
-            var engine = Liquid({
-                root: options.path,
-                extname: options.ext
-            });
             var template = engine.parse(file.contents.toString());
             var promise = engine.render(template, {name: 'alice'});
             promise.then(function (output) {

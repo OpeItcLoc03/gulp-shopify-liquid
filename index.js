@@ -12,8 +12,10 @@ var Liquid = require('shopify-liquid');
  * @param options.tags {Object} - tags that should be passed to files
 **/
 module.exports = function(options) {
+    
     var defaults = {
         path: '.',
+        inheritExtension: false,
         ext: '.html',
         data: {}
     }
@@ -39,6 +41,7 @@ module.exports = function(options) {
 	}
 
 	function liquid (file, enc, callback) {
+
         var data = _.cloneDeep(options.data);
 
 		if (file.isNull()) {
@@ -50,21 +53,35 @@ module.exports = function(options) {
         }
 
 		if (file.isStream()) {
-			this.emit("error",
-				new gutil.PluginError("gulp-shopify-liquid", "Stream content is not supported"));
+			this.emit("error", new gutil.PluginError("gulp-shopify-liquid", "Stream content is not supported"));
 			return callback();
 		}
 
+        var _this = this;
+
+        var filePath = file.path;
+
 		if (file.isBuffer()) {
-            var template = engine.parse(file.contents.toString());
-            var promise = engine.render(template, data);
-            promise.then(function (output) {
-                file.contents = new Buffer(output);
-                this.push(file);
+            try {
+                engine.parseAndRender(file.contents.toString(), data)
+                    .then(function (output) {
+
+                        file.contents = new Buffer(output);
+
+                        // Replace extension with mentioned/default extension
+                        // only if inherit extension flag is not provided(truthy)
+                        if (!options.inheritExtension) {
+                            file.path = gutil.replaceExtension(filePath, options.ext);
+                        }
+                        
+                        _this.push(file);
+                        callback();
+
+                    });
+            } catch (err) {
+                this.emit("error", new gutil.PluginError("gulp-shopify-liquid", err, {fileName: filePath}));
                 callback();
-            }.bind(this), function (err) {
-                new gutil.PluginError('gulp-shopify-liquid', 'Error during conversion');
-            });
+            }
         }
     }
 
